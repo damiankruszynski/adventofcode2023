@@ -5,91 +5,101 @@ import readInput
 
 fun main() {
 
-    fun checkIfThisLineOnTheSamePositionPlusOneIndexMinusOneIndexContainsSpecialChar(
-        line: String?,
-        startIndex: Int,
-        endIndex: Int
+    fun getListOfPartsFromEngine(input: List<String>): List<PartInEngine> {
+        val regex = "\\d+".toRegex()
+        val list = mutableListOf<PartInEngine>()
+        input.mapIndexed { index, it ->
+            var match = regex.find(it)
+            while (!match?.value.isNullOrBlank()) {
+                list.add(PartInEngine(index, match!!.range, match.value.toInt()))
+                match = match.next()
+            }
+        }
+        return list
+    }
+
+    fun getSpecialCharacters(input: List<String>): List<SpecialCharactersInEngine> {
+        val regex = "\\D".toRegex()
+        val list = mutableListOf<SpecialCharactersInEngine>()
+        input.map { it.replace(".", "0") }.mapIndexed { index, it ->
+            var match = regex.find(it)
+            while (!match?.value.isNullOrBlank()) {
+                list.add(SpecialCharactersInEngine(index, match!!.range.first, match!!.value))
+                match = match!!.next()
+            }
+        }
+        return list
+    }
+
+    fun isValidPart(
+        partInEngine: PartInEngine,
+        listOfSpecialCharactersInEngine: List<SpecialCharactersInEngine>,
+        lineLength: Int,
+        inputSize: Int
     ): Boolean {
-        if (line == null) return false
-        val cutFrom = if (startIndex == 0) 0 else startIndex - 1
-        val cutTo = if (endIndex == line.length - 1) line.length - 1 else endIndex + 2
-        println("for line: $line cutForm: $cutFrom cutTo: $cutTo")
-        val testedPart = line.substring(cutFrom, cutTo).replace(".", "a")
-        println(
-            "Tested part: $testedPart result: ${
-                !testedPart.all {
-                    it.isLetterOrDigit()
-                }
-            }"
-        )
-        return !testedPart.all {
-            it.isLetterOrDigit()
+        val rangeToCheckStart = if (partInEngine.rangeIndex.first == 0) 0 else partInEngine.rangeIndex.first - 1
+        val rangeToCheckLast =
+            if (partInEngine.rangeIndex.last == lineLength) lineLength else partInEngine.rangeIndex.last + 1
+        val rangeToCheck = rangeToCheckStart..rangeToCheckLast
+        println(rangeToCheck)
+        val previousLine = if (partInEngine.lineIndex != 0) {
+            listOfSpecialCharactersInEngine.any {
+                (it.lineIndex == partInEngine.lineIndex - 1) && rangeToCheck.contains(it.index)
+            }
+        } else
+            false
+        val nextLine = if (partInEngine.lineIndex != inputSize) {
+            listOfSpecialCharactersInEngine.any {
+                (it.lineIndex == partInEngine.lineIndex + 1) && rangeToCheck.contains(it.index)
+            }
+        } else
+            false
+        val theSameLine = listOfSpecialCharactersInEngine.any {
+            (it.lineIndex == partInEngine.lineIndex) && rangeToCheck.contains(it.index)
+        }
+        return previousLine || nextLine || theSameLine
+    }
+
+    fun partsCloseToSpecialChar(
+        partsInEngine: List<PartInEngine>,
+        specialCharactersInEngine: SpecialCharactersInEngine,
+        lineLength: Int,
+        inputSize: Int
+    ): List<PartInEngine> {
+        return partsInEngine.filter {
+            it.lineIndex == specialCharactersInEngine.lineIndex - 1 ||
+                    it.lineIndex == specialCharactersInEngine.lineIndex + 1 ||
+                    it.lineIndex == specialCharactersInEngine.lineIndex
+        }.filter {
+            val rangeToCheckStart = if (it.rangeIndex.first == 0) 0 else it.rangeIndex.first - 1
+            val rangeToCheckLast =
+                if (it.rangeIndex.last == lineLength) lineLength else it.rangeIndex.last + 1
+            val rangeToCheck = rangeToCheckStart..rangeToCheckLast
+            rangeToCheck.contains(specialCharactersInEngine.index)
         }
     }
 
     fun part1(input: List<String>): Int {
-        val listOfValid = mutableListOf<Int>()
-        val listOfInValid = mutableListOf<Int>()
-        repeat(input.size) {
-            val testedLine = input[it]
-            val previousLine = input.getOrNull(it - 1)
-            val nextLine = input.getOrNull(it + 1)
-            var number = ""
-            var startIndexOfNumber: Int? = null
-            var endIndexOfNumber: Int? = null
-            println("tested line: $testedLine")
-            testedLine.forEachIndexed { index, c ->
-                if (c.isDigit() && index != testedLine.length - 1) {
-                    number += c
-                    if (startIndexOfNumber == null) {
-                        startIndexOfNumber = index
-                    }
-                } else {
-                    val last = if (index == testedLine.length - 1 && c.isDigit()) c else ""
-                    if (number == "") return@forEachIndexed
-                    val foundNumber = (number + last).toInt()
-                    number = ""
-                    if (endIndexOfNumber == null) {
-                        endIndexOfNumber = index - 1
-                    }
-                    println("foundNumber: $foundNumber")
-                    if (
-                        checkIfThisLineOnTheSamePositionPlusOneIndexMinusOneIndexContainsSpecialChar(
-                            previousLine,
-                            startIndexOfNumber!!,
-                            endIndexOfNumber!!
-                        ) ||
-                        checkIfThisLineOnTheSamePositionPlusOneIndexMinusOneIndexContainsSpecialChar(
-                            testedLine,
-                            startIndexOfNumber!!,
-                            endIndexOfNumber!!
-                        ) ||
-                        checkIfThisLineOnTheSamePositionPlusOneIndexMinusOneIndexContainsSpecialChar(
-                            nextLine,
-                            startIndexOfNumber!!,
-                            endIndexOfNumber!!
-                        )
-                    ) {
-                        listOfValid.add(foundNumber)
-                        startIndexOfNumber = null
-                        endIndexOfNumber = null
-                    } else {
-                        listOfInValid.add(foundNumber)
-                        startIndexOfNumber = null
-                        endIndexOfNumber = null
-                    }
-
-                }
-            }
-
+        val list = getListOfPartsFromEngine(input)
+        println(list)
+        val listSpecial = getSpecialCharacters(input)
+        println(listSpecial)
+        return list.sumOf {
+            if (isValidPart(it, listSpecial, input.first().length, input.size)) {
+                it.value
+            } else 0
         }
-        println("VALID: $listOfValid")
-        println("INVALID: $listOfInValid")
-        return listOfValid.sum()
     }
 
-    fun part2(input: List<String>): Int {
-        return 0
+    fun part2(input: List<String>): Long {
+        val list = getListOfPartsFromEngine(input)
+        println(list)
+        val listSpecial = getSpecialCharacters(input)
+        println(listSpecial)
+        val partsCloseToSpecialChar = listSpecial.map {
+            partsCloseToSpecialChar(list, it, input.first().length, input.size)
+        }.filter { it.size == 2 }.sumOf { it.first().value.toLong() * it.last().value.toLong() }
+        return partsCloseToSpecialChar
     }
 
     val testInput = readInput("Day03_test")
@@ -99,8 +109,8 @@ fun main() {
     part1(input).println()
     check(part1(input) == 530495)
 
-    /*  val testInput2 = readInput("Day03_test2")
-      check(part2(testInput2) == 2286)
+    val testInput2 = readInput("Day03_test2")
+    check(part2(testInput2) == 467835L)
 
-      part2(input).println()*/
+    part2(input).println()
 }
