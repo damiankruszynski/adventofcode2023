@@ -64,7 +64,6 @@ fun main() {
         partsInEngine: List<PartInEngine>,
         specialCharactersInEngine: SpecialCharactersInEngine,
         lineLength: Int,
-        inputSize: Int
     ): List<PartInEngine> {
         return partsInEngine.filter {
             it.lineIndex == specialCharactersInEngine.lineIndex - 1 ||
@@ -97,7 +96,7 @@ fun main() {
         val listSpecial = getSpecialCharacters(input)
         println(listSpecial)
         val partsCloseToSpecialChar = listSpecial.map {
-            partsCloseToSpecialChar(list, it, input.first().length, input.size)
+            partsCloseToSpecialChar(list, it, input.first().length)
         }.filter { it.size == 2 }.sumOf { it.first().value.toLong() * it.last().value.toLong() }
         return partsCloseToSpecialChar
     }
