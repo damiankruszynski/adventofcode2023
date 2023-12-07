@@ -14,7 +14,7 @@ import readInput
 fun main() {
 
     val possibleCard = listOf<String>(
-        "A", "K", "Q", "J", "T", "9", "8", "7", "6", "5", "4", "3", "2", "J"
+        "A", "K", "Q", "T", "9", "8", "7", "6", "5", "4", "3", "2", "J"
     )
 
 
@@ -68,7 +68,17 @@ fun main() {
         }
     }
 
+    fun bestFromContainsChar(card: String): String {
+        val maps = possibleCard.mapIndexed { index, it ->
+            it to index
+        }
+        val result = maps.filter { card.contains(it.first) }.sortedBy { it.second }
+        println("bestFromContainsChar: $result for card $card")
+        return result.first().first
+    }
+
     fun replaceJokerByBestChar(card: String): String {
+        if (HandCard(card).whatContains() == CONTAINS_NOTHING) return card.replace('J', bestFromContainsChar(card)[0])
         if (HandCard(card).contains5()) return "AAAAA"
         val map = card.filter { it != 'J' }.toList().associateWith { char -> card.count { it == char } }
         val recordsWith2 = map.values.count { it == 2 }
@@ -84,7 +94,14 @@ fun main() {
         } else {
             map.maxBy { it.value }.key
         }
-        // println("Char to replacement for card: $card is $charToChooseForReplace After replace: ${card.replace('J', charToChooseForReplace)}")
+        println(
+            "Char to replacement for card: $card is $charToChooseForReplace After replace: ${
+                card.replace(
+                    'J',
+                    charToChooseForReplace
+                )
+            }"
+        )
         return card.replace('J', charToChooseForReplace)
     }
 
@@ -148,12 +165,13 @@ fun main() {
     val input = readInput("Day07")
     // part1(input).println()
 
-    /*al testInput2 = readInput("Day07_test2")
-    part2(testInput2).println()
-    check(part2(testInput2) == 5905)*/
+    /* val testInput2 = readInput("Day07_test2")
+     part2(testInput2).println()
+     check(part2(testInput2) == 5905)*/
 
-    val testInput3 = readInput("Day07_test_test2")
-    part2(testInput3).println()
+    // val testInput3 = readInput("Day07_test_test2")
+    // part2(testInput3).println()
+    part2(input).println()
     //(input).println()
     //check(part2(input) == 6472060)*/
 }
