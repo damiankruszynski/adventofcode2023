@@ -19,3 +19,23 @@ fun String.md5() = BigInteger(1, MessageDigest.getInstance("MD5").digest(toByteA
  * The cleaner shorthand for printing output.
  */
 fun Any?.println() = println(this)
+
+/**
+ * Calculates the greatest common divisor (GCD) of two numbers.
+ *
+ * @param a The first number.
+ * @param b The second number.
+ * @return The GCD of the two numbers.
+ */
+tailrec fun gcd(a: Long, b: Long): Long = if (b == 0L) a else gcd(b, a % b)
+
+/**
+ * Calculates the least common multiple (LCM) of two numbers.
+ *
+ * @param a The first number.
+ * @param b The second number.
+ * @return The LCM of the two numbers.
+ */
+fun lcm(a: Long, b: Long): Long {
+    return a / gcd(a, b) * b
+}

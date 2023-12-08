@@ -1,6 +1,7 @@
 package day8
 
 
+import lcm
 import println
 import readInput
 
@@ -37,6 +38,7 @@ fun main() {
 
     fun part1(input: List<String>): Int {
         val network = mapToNetworksMaps(input)
+        println("map contains ${network.map.count()}")
         val networkMap = network.map
         val start = "AAA"
         var result = ""
@@ -45,7 +47,7 @@ fun main() {
         var currentOn: NetworkMap = firstStep
         var steeps = 0
         while (result != "ZZZ") {
-            network.instructionMap.steps.forEach {
+            network.instructionMap.direction.forEach {
                 whereGoNext = if (it == "L") currentOn.left else currentOn.right
                 println("Where go next $whereGoNext")
                 currentOn = networkMap.find { it.key == whereGoNext }!!
@@ -59,71 +61,48 @@ fun main() {
     }
 
 
-    fun part2(input: List<String>): Int {
+    fun part2(input: List<String>): Long {
         val network = mapToNetworksMaps(input)
-        val networkMap = network.map
-        val start = 'A'
-        val firstSteps = networkMap.filter { it.key.last() == start }
-        var whereGoNext: List<String> = mutableListOf()
-        var currentOn: List<NetworkMap> = firstSteps
-        var result: List<String> = currentOn.map { it.key }
-        var steeps: Int = 0
-        while (result.any { it.last() != 'Z' }) {
-            network.instructionMap.steps.forEach { step ->
-                whereGoNext = if (step == "L") currentOn.map { it.left } else currentOn.map { it.right }
-                println("Where go next $whereGoNext")
-                currentOn = networkMap.filter { whereGoNext.contains(it.key) }
-                println("Current on ${currentOn.map { it.key }}")
-                result = currentOn.map { it.key }
-                steeps++
-                if (result.all { char -> char.last() == 'Z' }) return@forEach
+        val maps = network.map.associate {
+            it.key to (it.left to it.right)
+        }
+        return maps.keys.filter { it.endsWith("A") }.map { map ->
+            var currentMap = map
+            var instructionIndex = 0
+            var step = 0L
+            while (currentMap.last() != 'Z') {
+                println("START currentMap: $currentMap")
+                instructionIndex =
+                    if (instructionIndex == network.instructionMap.direction.size) 0 else instructionIndex
+                val direction = network.instructionMap.direction[instructionIndex]
+                instructionIndex += 1
+                println("DIRECTION: $direction")
+                currentMap = if (direction == "L") maps[currentMap]!!.first else maps[currentMap]!!.second
+                println("After change currentMap: $currentMap")
+                step++
             }
-        }
-        return steeps
+            step
+
+        }.also {
+            println("Steeps count: ${it.size}")
+            println("Steeps value: $it")
+        }.reduce(::lcm)
     }
 
 
-    tailrec fun processSteps(
-        currentOn: List<NetworkMap>,
-        steeps: Int,
-        network: NetworkMaps,
-        stepIndex: Int
-    ): Int {
-        val result = currentOn.map { it.key }
-        if (result.all { it.last() == 'Z' }) return steeps
-
-        val step = network.instructionMap.steps[stepIndex]
-        val nextNodes = currentOn.flatMap { node ->
-            listOfNotNull(node.left.takeIf { step == "L" }, node.right.takeIf { step == "R" })
-                .flatMap { whereGoNext ->
-                    network.map.filter { it.key == whereGoNext }
-                }
-        }
-
-        return processSteps(nextNodes, steeps + 1, network, (stepIndex + 1) % network.instructionMap.steps.size)
-    }
-
-    fun part2_U(input: List<String>): Int {
-        val network = mapToNetworksMaps(input)
-        val start = 'A'
-        val firstSteps = network.map.filter { it.key.last() == start }
-        return processSteps(firstSteps, 0, network, 0)
-    }
-
-
-    val testInput = readInput("Day08_test")
-    part1(testInput).println()
-    check(part1(testInput) == 6)
+    // val testInput = readInput("Day08_test")
+    // part1(testInput).println()
+    // check(part1(testInput) == 6)
 
 
     val input = readInput("Day08")
-    part1(input).println()
-    check(part1(input) == 17141)
+    //part1(input).println()
+    //  check(part1(input) == 17141)
 
-    val testInput2 = readInput("Day08_test2")
+    //  val testInput2 = readInput("Day08_test2")
     // part2(testInput2).println()
-    //check(part2(testInput2) == 6)
-    //part2_U(input).println()
+    //check(part2(testInput2) == 6L)
+    part2(input).println()
 
 
     //check(part2(input) == 6472060)*/
